@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Copy, Check, Download, FileText } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'react-hot-toast'
 import styles from './Result.module.css'
 
@@ -41,7 +41,22 @@ export default function Result() {
   const { state } = useLocation()
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
+  const [pdfUrl, setPdfUrl] = useState(null)
+  const objectUrlRef = useRef(null)
 
+  useEffect(() => {
+  if (state?.fileObject) {
+    const url = URL.createObjectURL(state.fileObject)
+    objectUrlRef.current = url
+    setPdfUrl(url)
+  } else if (state?.filename) {
+    // Fallback: load from backend if navigated from History
+    setPdfUrl(`http://localhost:8000/uploads/${state.filename}`)
+  }
+  return () => {
+    if (objectUrlRef.current) URL.revokeObjectURL(objectUrlRef.current)
+  }
+}, [state?.fileObject, state?.filename])
   if (!state?.result) {
     return (
       <div className={styles.empty}>
@@ -79,7 +94,7 @@ export default function Result() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Top bar */}
       <div className={styles.topBar}>
         <button className={styles.back} onClick={() => navigate('/')}>
           <ArrowLeft size={15} /> Back
@@ -98,94 +113,130 @@ export default function Result() {
         </div>
       </div>
 
-      <h2 className={styles.pageTitle}>Extracted Invoice Data</h2>
+      {/* Split layout */}
+      <div className={styles.splitLayout}>
 
-      {/* Highlight cards */}
-      <motion.div
-        className={styles.highlights}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
-        {[
-          { label: 'Invoice No', value: result.invoice_number || '—', accent: true },
-          { label: 'Date',       value: result.invoice_date   || '—' },
-          { label: 'Total',      value: result.grand_total ? `₹${Number(result.grand_total).toLocaleString('en-IN')}` : '—', accent: true },
-          { label: 'GST',        value: result.total_gst ? `₹${Number(result.total_gst).toLocaleString('en-IN')}` : '—' },
-        ].map(({ label, value, accent }) => (
-          <div key={label} className={`${styles.highlight} ${accent ? styles.highlightAccent : ''}`}>
-            <span className={styles.hlLabel}>{label}</span>
-            <span className={styles.hlValue}>{value}</span>
+        {/* LEFT — PDF Viewer */}
+        <div className={styles.pdfPanel}>
+          <div className={styles.pdfHeader}>
+            <FileText size={13} />
+            <span>Invoice Preview</span>
           </div>
-        ))}
-      </motion.div>
+          {pdfUrl ? (
+  filename?.match(/\.(png|jpg|jpeg|tiff|tif)$/i) ? (
+    <img
+      src={pdfUrl}
+      alt="Invoice"
+      style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#fff' }}
+    />
+  ) : (
+    <iframe
+      src={pdfUrl}
+      className={styles.pdfFrame}
+      title="Invoice PDF"
+    />
+  )
+) : (
+  <div className={styles.pdfFallback}>
+    <FileText size={40} opacity={0.3} />
+    <p>PDF preview not available</p>
+    <span>Re-upload the invoice to see a preview</span>
+  </div>
+)}
+        </div>
 
-      {/* Sections */}
-      <div className={styles.sections}>
-        {SECTIONS.map(({ label, keys }, si) => (
+        {/* RIGHT — Extracted data */}
+        <div className={styles.dataPanel}>
+          <h2 className={styles.pageTitle}>Extracted Invoice Data</h2>
+
+          {/* Highlight cards */}
           <motion.div
-            key={label}
-            className={styles.section}
-            initial={{ opacity: 0, y: 16 }}
+            className={styles.highlights}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 + si * 0.07 }}
+            transition={{ duration: 0.4 }}
           >
-            <h3 className={styles.sectionTitle}>{label}</h3>
-            <div className={styles.fields}>
-              {keys.map(key => (
-                result[key] !== undefined && (
-                  <div key={key} className={styles.field}>
-                    <span className={styles.fieldLabel}>{FIELD_LABELS[key] || key}</span>
-                    <span className={styles.fieldValue}>{formatValue(key, result[key])}</span>
-                  </div>
-                )
-              ))}
-            </div>
+            {[
+              { label: 'Invoice No', value: result.invoice_number || '—', accent: true },
+              { label: 'Date',       value: result.invoice_date   || '—' },
+              { label: 'Total',      value: result.grand_total ? `₹${Number(result.grand_total).toLocaleString('en-IN')}` : '—', accent: true },
+              { label: 'GST',        value: result.total_gst ? `₹${Number(result.total_gst).toLocaleString('en-IN')}` : '—' },
+            ].map(({ label, value, accent }) => (
+              <div key={label} className={`${styles.highlight} ${accent ? styles.highlightAccent : ''}`}>
+                <span className={styles.hlLabel}>{label}</span>
+                <span className={styles.hlValue}>{value}</span>
+              </div>
+            ))}
           </motion.div>
-        ))}
 
-        {/* Line items */}
-        {result.line_items && result.line_items.length > 0 && (
-          <motion.div
-            className={styles.section}
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-          >
-            <h3 className={styles.sectionTitle}>Line Items ({result.line_items.length})</h3>
-            <div className={styles.tableWrap}>
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    {Object.keys(result.line_items[0]).map(k => (
-                      <th key={k}>{k.replace(/_/g,' ')}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.line_items.map((item, i) => (
-                    <tr key={i}>
-                      {Object.values(item).map((v, j) => (
-                        <td key={j}>{String(v)}</td>
-                      ))}
-                    </tr>
+          {/* Sections */}
+          <div className={styles.sections}>
+            {SECTIONS.map(({ label, keys }, si) => (
+              <motion.div
+                key={label}
+                className={styles.section}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 + si * 0.07 }}
+              >
+                <h3 className={styles.sectionTitle}>{label}</h3>
+                <div className={styles.fields}>
+                  {keys.map(key => (
+                    result[key] !== undefined && (
+                      <div key={key} className={styles.field}>
+                        <span className={styles.fieldLabel}>{FIELD_LABELS[key] || key}</span>
+                        <span className={styles.fieldValue}>{formatValue(key, result[key])}</span>
+                      </div>
+                    )
                   ))}
-                </tbody>
-              </table>
-            </div>
-          </motion.div>
-        )}
+                </div>
+              </motion.div>
+            ))}
 
-        {/* Raw JSON */}
-        <motion.div
-          className={styles.section}
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <h3 className={styles.sectionTitle}>Raw JSON Output</h3>
-          <pre className={styles.json}>{JSON.stringify(result, null, 2)}</pre>
-        </motion.div>
+            {/* Line items */}
+            {result.line_items && result.line_items.length > 0 && (
+              <motion.div
+                className={styles.section}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <h3 className={styles.sectionTitle}>Line Items ({result.line_items.length})</h3>
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    <thead>
+                      <tr>
+                        {Object.keys(result.line_items[0]).map(k => (
+                          <th key={k}>{k.replace(/_/g,' ')}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.line_items.map((item, i) => (
+                        <tr key={i}>
+                          {Object.values(item).map((v, j) => (
+                            <td key={j}>{String(v)}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Raw JSON */}
+            <motion.div
+              className={styles.section}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+            >
+              <h3 className={styles.sectionTitle}>Raw JSON Output</h3>
+              <pre className={styles.json}>{JSON.stringify(result, null, 2)}</pre>
+            </motion.div>
+          </div>
+        </div>
       </div>
     </div>
   )

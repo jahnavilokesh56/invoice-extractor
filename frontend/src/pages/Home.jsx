@@ -44,7 +44,13 @@ export default function Home() {
         const history = JSON.parse(localStorage.getItem('invoice_history') || '[]')
         history.unshift({ id: Date.now(), filename: files[0].file.name, data, date: new Date().toISOString() })
         localStorage.setItem('invoice_history', JSON.stringify(history.slice(0, 20)))
-        navigate('/result', { state: { result: data, filename: files[0].file.name } })
+        navigate('/result', {
+  state: {
+    result: data,
+    filename: files[0].file.name,
+    fileObject: files[0].file,   // ← add this
+  }
+})
       } else {
         const fd = new FormData()
         files.forEach(f => fd.append('files', f.file))

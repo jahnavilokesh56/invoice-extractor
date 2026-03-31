@@ -1,12 +1,11 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 import uvicorn
 import os
 import json
 import csv
-import tempfile
-import shutil
 from typing import List
 from extractor import InvoiceExtractor
 
@@ -18,7 +17,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://localhost:3002"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -46,7 +45,6 @@ async def extract_invoice(file: UploadFile = File(...)):
     if not file.filename:
         raise HTTPException(status_code=400, detail="No file provided")
 
-    allowed_types = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/tiff"]
     allowed_extensions = [".pdf", ".png", ".jpg", ".jpeg", ".tiff", ".tif"]
     ext = os.path.splitext(file.filename)[1].lower()
 
@@ -72,9 +70,7 @@ async def extract_invoice(file: UploadFile = File(...)):
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Extraction failed: {str(e)}")
-    finally:
-        if os.path.exists(temp_path):
-            os.remove(temp_path)
+    # No finally block — file is kept in uploads/ so frontend can display it
 
 
 @app.post("/extract-multiple")
@@ -134,6 +130,10 @@ async def export_csv(file: UploadFile = File(...)):
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
+
+
+# Serve uploaded files so the frontend can display the invoice PDF/image
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 
 if __name__ == "__main__":

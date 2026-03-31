@@ -1,7 +1,106 @@
 .page {
-  max-width: 880px;
-  margin: 0 auto;
-  padding: 32px 24px 80px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.topBar {
+  flex-shrink: 0;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Split layout container */
+.splitLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* LEFT PANEL — PDF viewer */
+.pdfPanel {
+  flex: 0 0 48%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+
+.pdfHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.pdfFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+
+.pdfFallback {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text3);
+  padding: 40px;
+  text-align: center;
+}
+
+.pdfFallback p {
+  font-size: 14px;
+  color: var(--text2);
+  margin: 0;
+}
+
+.pdfFallback span {
+  font-size: 12px;
+}
+
+/* RIGHT PANEL — extracted data */
+.dataPanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 60px;
+}
+
+/* Responsive: stack vertically on small screens */
+@media (max-width: 768px) {
+  .page {
+    height: auto;
+    overflow: visible;
+  }
+  .splitLayout {
+    flex-direction: column;
+    overflow: visible;
+  }
+  .pdfPanel {
+    flex: 0 0 auto;
+    height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .dataPanel {
+    overflow-y: visible;
+    padding: 20px 16px 60px;
+  }
 }
 
 .topBar {
