@@ -12,7 +12,7 @@
   transform: translateX(-50%);
   width: 900px;
   height: 500px;
-  background: radial-gradient(ellipse, rgba(124,106,255,0.1) 0%, transparent 70%);
+  background: radial-gradient(ellipse, rgba(124, 106, 255, 0.1) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -26,7 +26,7 @@
   justify-content: space-between;
   padding: 0 32px;
   height: 60px;
-  background: rgba(10,10,15,0.85);
+  background: rgba(10, 10, 15, 0.85);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
 }
@@ -40,6 +40,7 @@
   font-size: 17px;
   color: var(--accent3);
   letter-spacing: -0.3px;
+  text-decoration: none;
 }
 
 .logo svg {
@@ -60,6 +61,7 @@
   font-size: 13.5px;
   font-weight: 500;
   color: var(--text2);
+  text-decoration: none;           /* prevent default underline on NavLink */
   transition: color 0.2s, background 0.2s;
 }
 
@@ -70,13 +72,24 @@
 
 .navLink.active {
   color: var(--accent3);
-  background: rgba(124,106,255,0.12);
+  background: rgba(124, 106, 255, 0.12);
 }
 
+/* ── Main content area ── */
 .main {
   flex: 1;
   position: relative;
   z-index: 1;
+  /* Must NOT be overflow:hidden — that clips drop-shadows and modal overlays */
+  overflow: visible;
+}
+
+/* Full-width wrapper rendered by framer-motion on every page transition.
+   Without width:100% the motion.div collapses to 0 width and the page
+   appears blank even though it rendered correctly. */
+.pageWrapper {
+  width: 100%;
+  min-height: 0;
 }
 
 .footer {
@@ -85,4 +98,18 @@
   font-size: 12px;
   color: var(--text3);
   border-top: 1px solid var(--border);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Responsive header ── */
+@media (max-width: 480px) {
+  .header {
+    padding: 0 16px;
+  }
+
+  .navLink {
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
 }

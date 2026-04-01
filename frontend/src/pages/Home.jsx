@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'react-hot-toast'
-import { Upload, FileText, X, Zap, Loader2, ChevronRight, FileUp } from 'lucide-react'
+import { FileText, X, Zap, Loader2, ChevronRight, FileUp } from 'lucide-react'
 import axios from 'axios'
 import styles from './Home.module.css'
 
@@ -40,26 +40,49 @@ export default function Home() {
         const fd = new FormData()
         fd.append('file', files[0].file)
         const { data } = await axios.post(`${API}/extract`, fd)
-        // Save to localStorage history
+
+        // Save to localStorage history with hasPreview flag
         const history = JSON.parse(localStorage.getItem('invoice_history') || '[]')
-        history.unshift({ id: Date.now(), filename: files[0].file.name, data, date: new Date().toISOString() })
+        history.unshift({
+          id: Date.now(),
+          filename: files[0].file.name,
+          data,
+          date: new Date().toISOString(),
+          hasPreview: true,   // file is saved in backend/uploads/ for PDF viewer
+        })
         localStorage.setItem('invoice_history', JSON.stringify(history.slice(0, 20)))
+
+        // Pass the live File object so Result page can show an instant blob URL
         navigate('/result', {
-  state: {
-    result: data,
-    filename: files[0].file.name,
-    fileObject: files[0].file,   // ← add this
-  }
-})
+          state: {
+            result: data,
+            filename: files[0].file.name,
+            fileObject: files[0].file,  // used for immediate blob URL in Result.jsx
+          }
+        })
+
       } else {
         const fd = new FormData()
         files.forEach(f => fd.append('files', f.file))
         const { data } = await axios.post(`${API}/extract-multiple`, fd)
-        toast.success(`Extracted ${data.total} invoices`)
+
+        const successCount = data.results.filter(r => r.status === 'success').length
+        const errorCount   = data.results.filter(r => r.status === 'error').length
+
+        if (successCount > 0) toast.success(`Extracted ${successCount} invoice${successCount > 1 ? 's' : ''}`)
+        if (errorCount   > 0) toast.error(`${errorCount} file${errorCount > 1 ? 's' : ''} failed`)
+
+        // Save each successful result to history with hasPreview flag
         const history = JSON.parse(localStorage.getItem('invoice_history') || '[]')
         data.results.forEach(r => {
           if (r.status === 'success') {
-            history.unshift({ id: Date.now() + Math.random(), filename: r.filename, data: r.data, date: new Date().toISOString() })
+            history.unshift({
+              id: Date.now() + Math.random(),
+              filename: r.filename,
+              data: r.data,
+              date: new Date().toISOString(),
+              hasPreview: true,   // file is saved in backend/uploads/ for PDF viewer
+            })
           }
         })
         localStorage.setItem('invoice_history', JSON.stringify(history.slice(0, 20)))
@@ -84,6 +107,7 @@ export default function Home() {
       a.href = url
       a.download = files[0].file.name.replace(/\.\w+$/, '.csv')
       a.click()
+      URL.revokeObjectURL(url)   // free memory after triggering download
       toast.success('CSV downloaded!')
     } catch (err) {
       toast.error('CSV export failed')
@@ -158,7 +182,10 @@ export default function Home() {
             <p className={styles.dropMain}>
               {isDragActive ? 'Drop it here!' : 'Drag & drop invoices here'}
             </p>
-            <p className={styles.dropSub}>or click to browse · PDF, PNG, JPG, TIFF</p>
+            <p className={styles.dropSub}>
+              or click to browse · PDF, PNG, JPG, TIFF
+              {mode === 'batch' && <span className={styles.batchHint}> · up to 10 files</span>}
+            </p>
           </div>
         </div>
 
@@ -190,6 +217,13 @@ export default function Home() {
                   </button>
                 </motion.div>
               ))}
+
+              {/* Batch counter badge */}
+              {mode === 'batch' && (
+                <div className={styles.batchCounter}>
+                  {files.length} / 10 files selected
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -210,7 +244,7 @@ export default function Home() {
           {loading ? (
             <><Loader2 size={16} className={styles.spin} /> Processing…</>
           ) : (
-            <><Zap size={16} /> Extract Data <ChevronRight size={15} /></>
+            <><Zap size={16} /> {mode === 'batch' ? `Extract ${files.length} Invoice${files.length > 1 ? 's' : ''}` : 'Extract Data'} <ChevronRight size={15} /></>
           )}
         </button>
         {mode === 'single' && files.length > 0 && (
@@ -228,10 +262,10 @@ export default function Home() {
         transition={{ delay: 0.5 }}
       >
         {[
-          { icon: '🔍', title: 'Tesseract OCR', desc: 'Industry-grade optical character recognition' },
-          { icon: '⚡', title: 'FastAPI Backend', desc: 'High-performance async Python API' },
+          { icon: '🔍', title: 'Tesseract OCR',    desc: 'Industry-grade optical character recognition' },
+          { icon: '⚡', title: 'FastAPI Backend',  desc: 'High-performance async Python API' },
           { icon: '📋', title: 'Structured Output', desc: 'Clean JSON & CSV with all invoice fields' },
-          { icon: '🧠', title: 'Smart Parsing', desc: 'Regex-based field extraction for GTA invoices' },
+          { icon: '🧠', title: 'Smart Parsing',    desc: 'Regex-based field extraction for GST invoices' },
         ].map(({ icon, title, desc }) => (
           <div key={title} className={styles.featureCard}>
             <span className={styles.featureEmoji}>{icon}</span>
