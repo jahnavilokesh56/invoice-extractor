@@ -1,0 +1,291 @@
+/* ── Page shell: full viewport, no scroll on outer container ── */
+.page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── Top bar ── */
+.topBar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all 0.2s;
+}
+.back:hover { color: var(--text); border-color: var(--border2); }
+
+.fileChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: rgba(124,106,255,0.08);
+  border: 1px solid rgba(124,106,255,0.2);
+  border-radius: var(--radius-sm);
+  color: var(--accent3);
+  font-size: 12px;
+  font-family: var(--mono);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text2);
+  font-size: 13px;
+  cursor: pointer;
+  font-family: var(--sans);
+  transition: all 0.2s;
+}
+.iconBtn:hover { color: var(--text); border-color: var(--accent); }
+
+/* ── Split layout container ── */
+.splitLayout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+/* ── LEFT PANEL — PDF / image viewer ── */
+.pdfPanel {
+  flex: 0 0 48%;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg2);
+  overflow: hidden;
+}
+
+.pdfHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.pdfFrame {
+  flex: 1;
+  width: 100%;
+  border: none;
+  background: white;
+}
+
+.pdfFallback {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text3);
+  padding: 40px;
+  text-align: center;
+}
+.pdfFallback p   { font-size: 14px; color: var(--text2); margin: 0; }
+.pdfFallback span { font-size: 12px; }
+
+/* ── RIGHT PANEL — extracted data ── */
+.dataPanel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 20px 60px;
+}
+
+/* ── Responsive: stack vertically on small screens ── */
+@media (max-width: 768px) {
+  .page        { height: auto; overflow: visible; }
+  .splitLayout { flex-direction: column; overflow: visible; }
+  .pdfPanel    { flex: 0 0 auto; height: 50vh; border-right: none; border-bottom: 1px solid var(--border); }
+  .dataPanel   { overflow-y: visible; padding: 20px 16px 60px; }
+}
+
+/* ── Data panel content ── */
+.pageTitle {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+  margin-bottom: 24px;
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 28px;
+}
+@media (max-width: 600px) { .highlights { grid-template-columns: repeat(2, 1fr); } }
+
+.highlight {
+  padding: 16px 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.highlightAccent {
+  background: rgba(124,106,255,0.08);
+  border-color: rgba(124,106,255,0.22);
+}
+.hlLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text3);
+  margin-bottom: 6px;
+}
+.hlValue {
+  display: block;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sections { display: flex; flex-direction: column; gap: 20px; }
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.sectionTitle {
+  padding: 14px 20px;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent3);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: rgba(124,106,255,0.05);
+}
+
+.fields { display: grid; grid-template-columns: 1fr 1fr; }
+@media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.field:last-child, .field:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text3);
+}
+.fieldValue {
+  font-size: 14px;
+  color: var(--text);
+  font-family: var(--mono);
+  word-break: break-all;
+}
+
+.money  { color: var(--gold2); font-weight: 500; }
+.empty2 { color: var(--text3); font-family: var(--sans); }
+
+.tableWrap { overflow-x: auto; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+  font-family: var(--mono);
+}
+.table th {
+  padding: 10px 16px;
+  text-align: left;
+  background: var(--surface2);
+  color: var(--text3);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.table td {
+  padding: 10px 16px;
+  color: var(--text2);
+  border-top: 1px solid var(--border);
+  white-space: nowrap;
+}
+.table tr:hover td { background: rgba(255,255,255,0.02); }
+
+.json {
+  background: var(--bg2);
+  color: var(--accent3);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 20px;
+  overflow-x: auto;
+  line-height: 1.6;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+/* ── Empty / error state ── */
+.empty {
+  text-align: center;
+  padding: 80px 24px;
+  color: var(--text2);
+}
+.backBtn {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--sans);
+}
